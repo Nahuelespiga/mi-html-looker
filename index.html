@@ -15,12 +15,22 @@
   </style>
 </head>
 <body>
+  <div class="filtros">
+    <label for="provinciaFilter">Provincia:</label>
+    <select id="provinciaFilter">
+      <option value="">Todas las provincias</option>
+    </select>
+
+    <label for="ciudadFilter">Ciudad:</label>
+    <select id="ciudadFilter">
+      <option value="">Todas las ciudades</option>
+    </select>
+  </div>
 <div id="map"></div>
 
 <script>
   // Token público de Mapbox
   mapboxgl.accessToken = 'pk.eyJ1Ijoibmljb3BlbmFmbG9yIiwiYSI6ImNtY3Q5NGRnZDAybzUybHBrODR3aDQ3OWMifQ.JIQvtVoxOsfZQB5c7K-fMg';
-
 
   const servicePoints = [
     { name: 'Mecanica Huguito', provincia: 'Buenos Aires', ciudad: 'Chascomús', coords: [-37.1451508, -58.4871409] },
