@@ -19,7 +19,7 @@
 
 <script>
   // Token público de Mapbox
-  mapboxgl.accessToken = 'pk.eyJ1Ijoibmljb3BlbmFmbG9yIiwiYSI6ImNtY3Q5NGRnZDAybzUybHBrODR3aDQ3OWMifQ.JIQvtVoxOsfZQB5c7K-fMg';
+  mapboxgl.accessToken = 'pk.eyJ1Ijoibmljb3BlbmFmbG9yIiwiYSI6ImNtY3Q5NGRnZDAybzUybHBrODR3aDQ3OWMifQ.
 
   const servicePoints = [
     { name: 'Mecanica Huguito', coords: [-58.4871409, -37.1451508] },
@@ -223,17 +223,19 @@
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v11',
     center: [-58.38, -34.6],
-    zoom: 12
+    zoom: 4
   });
 
   // 🔹 Mostrar todos los puntos desde el inicio
   servicePoints.forEach(p => {
+    const coordsInvertidos = [p.coords[1], p.coords[0]];
     new mapboxgl.Marker()
-      .setLngLat(p.coords)
+      .setLngLat(coordsInvertidos)
       .setPopup(new mapboxgl.Popup().setText(p.name))
       .addTo(map);
   });
 
+  // Agregamos el buscador de direcciones
   const geocoder = new MapboxGeocoder({
     accessToken: mapboxgl.accessToken,
     mapboxgl: mapboxgl,
@@ -243,6 +245,7 @@
 
   map.addControl(geocoder);
 
+  // Cuando el usuario elige una dirección
   geocoder.on('result', function(e) {
     const clientLocation = e.result.center;
 
@@ -251,15 +254,17 @@
       .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
       .addTo(map);
 
+    // 🔹 Mostrar los servicePoints con distancia y coordenadas invertidas
     servicePoints.forEach(p => {
+      const coordsInvertidos = [p.coords[1], p.coords[0]];
       const distance = turf.distance(
         turf.point(clientLocation),
-        turf.point(p.coords),
+        turf.point(coordsInvertidos),
         { units: 'kilometers' }
       ).toFixed(2);
-      
+
       new mapboxgl.Marker()
-        .setLngLat(p.coords)
+        .setLngLat(coordsInvertidos)
         .setPopup(new mapboxgl.Popup().setText(`${p.name} - ${distance} km`))
         .addTo(map);
     });
