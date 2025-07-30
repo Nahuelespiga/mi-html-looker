@@ -36,7 +36,7 @@
     { name: 'Compresores Temperley', coords: [-58.3826342, -34.7724257] },
     { name: 'El Fede', coords: [-62.7258451, -35.9662425] },
     { name: 'Hidroneu', coords: [-59.0175448, -34.1122204] },
-    // 🔹 resto de tu lista (mantenemos el orden corregido de coordenadas)
+    // 🔹 resto de tu lista
   ];
 
   const map = new mapboxgl.Map({
@@ -44,6 +44,14 @@
     style: 'mapbox://styles/mapbox/streets-v11',
     center: [-58.38, -34.6],
     zoom: 12
+  });
+
+  // 🔹 Mostrar todos los puntos desde el inicio
+  servicePoints.forEach(p => {
+    new mapboxgl.Marker()
+      .setLngLat(p.coords)
+      .setPopup(new mapboxgl.Popup().setText(p.name))
+      .addTo(map);
   });
 
   const geocoder = new MapboxGeocoder({
