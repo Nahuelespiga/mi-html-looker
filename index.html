@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Servicios técnicos cercanos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.1/mapbox-gl-geocoder.min.js"></script>
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.1/mapbox-gl-geocoder.css" />
+  <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+
+<script>
+  mapboxgl.accessToken = 'sk.eyJ1Ijoibmljb3BlbmFmbG9yIiwiYSI6ImNtZG90eDVjMzA1eXIybW9hdzAwZzRlMHkifQ.h_u0nV8swM9wL9BKfYsvBA';  // ⚠️ Reemplazá esto
+
+  const servicePoints = [
+    { name: 'Mecanica Huguito', coords: [-37.1451508, -58.4871409] },
+    { name: 'Acyca Rural', coords: [-35.0359373, -58.7562265] },
+    { name: 'Prestaciones eléctricas', coords: [-34.6290107, -58.5307933] },
+    { name: 'Electromecánica JAB', coords: [-35.0361088, -63.0129307] },
+    { name: 'Todo Para Fumigar', coords: [-34.6320193, -58.6607833] },
+    { name: 'BAIRESMAQ', coords: [-34.5152144, -58.7441846] },
+    { name: 'Ferreteria Industrial Alejandro', coords: [-36.8647471, -57.8827733] },
+    { name: 'Casa Gallano', coords: [-36.5921589, -56.6896045] },
+    { name: 'X-tools', coords: [-38.5727047, -58.7297409] },
+    { name: 'Quick Service Olavarria', coords: [-36.9042101, -60.3065722] },
+    { name: 'Reparaciones J&J', coords: [-35.814463, -61.910108] },
+    { name: 'Compresores Temperley', coords: [-34.7724257, -58.3826342] },
+    { name: 'El Fede', coords: [-35.9662425, -62.7258451] },
+    { name: 'Hidroneu', coords: [-34.1122204, -59.0175448] },
+    { name: 'Electromek', coords: [-28.4764501, -65.7845592] },
+    { name: 'La Casa del Repuesto', coords: [-28.469581, -65.7795441] },
+    { name: 'Vicente Service Oficial', coords: [-26.7850946, -60.4359737] },
+    { name: 'Taller QHJ', coords: [-27.5745086, -60.7180318] },
+    { name: 'Servis Emanuel', coords: [-27.5758266, -60.7136879] },
+    { name: 'Felix Olazabal', coords: [-43.2719077, -65.3138445] },
+    { name: 'J L Mecanica Especializada', coords: [-31.6555151, -64.4137847] },
+    { name: 'Hijos De Osvaldo Monti (HOM)', coords: [-31.010387, -62.6735579] },
+    { name: 'World Machine', coords: [-31.4421998, -64.5036822] },
+    { name: 'Casa Santos', coords: [-31.4282154, -64.4961823] },
+    { name: 'AVR TOOLS', coords: [-31.4331269, -64.159612] },
+    { name: 'Microcor Servicio Tecnico', coords: [-31.4082537, -64.1816984] },
+    { name: 'Hogar Service', coords: [-31.410909, -64.1877649] },
+    { name: 'Rozados Maquinarias', coords: [-30.7274706, -64.804784] },
+    { name: 'Pagliaroli Rodolfo', coords: [-32.6956371, -62.1136895] },
+    { name: 'Servicios Sierras Chicas', coords: [-31.1837169, -64.3039405] },
+    { name: 'Electronica Rio Tercero', coords: [-32.1766541, -64.1130995] },
+    { name: 'CF Servicio', coords: [-32.1735179, -64.1243271] },
+    { name: 'Electromecanica Genesis', coords: [-32.1755751, -64.1247537] },
+    { name: 'Electromecanica Nuñez', coords: [-31.4376387, -62.0763203] },
+    { name: 'Motosierras Gondra', coords: [-33.9138322, -64.3911639] },
+    { name: 'Zaskar Bicicleteria', coords: [-31.2951653, -64.2930932] },
+    { name: 'Palvoc Servicios Electricos', coords: [-31.5551378, -63.5417119] },
+    { name: 'Garcia Gerardo Repuestos', coords: [-29.1586399, -59.2681707] },
+    { name: 'Angel Abel Nievas', coords: [-29.1629657, -59.2748815] },
+    { name: 'Electronagy', coords: [-29.7133997, -57.1028382] },
+    { name: 'Oscar Depretto Maquinarias', coords: [-28.2579855, -58.6354285] },
+    { name: 'Service Bolchinsky', coords: [-31.3911775, -58.0197654] },
+    { name: 'Megaingenieria', coords: [-32.0443167, -60.3108882] },
+    { name: 'Ferreteria Los Lapachos', coords: [-33.0155641, -58.5279309] },
+    { name: 'Hein Maquinas y Servicios', coords: [-31.6610272, -59.9106348] },
+    { name: 'Tecnica Parana', coords: [-31.7670884, -60.5198707] },
+    { name: 'Bobinados Anis', coords: [-31.7389457, -60.4993078] },
+    { name: 'Nuevo Service', coords: [-31.8568225, -59.0261593] },
+    { name: 'System Formosa', coords: [-26.1904595, -58.1690377] },
+    { name: 'Audiovision Servicio Tecnico Electronico', coords: [-36.6478301, -64.3309698] },
+    { name: 'Bobinados Chamical', coords: [-30.3584724, -66.310283] },
+    { name: 'Pato Bobinados', coords: [-29.1611279, -67.4962016] },
+    { name: 'Linea Blanca', coords: [-29.3937355, -66.8193044] },
+    { name: 'NC Multiservicios', coords: [-34.9789827, -67.6986126] },
+    { name: 'REPSA', coords: [-33.7650645, -69.0609174] },
+    { name: 'Curt Franke S.A.', coords: [-26.561021, -54.7794153] },
+    { name: 'Mario Luis Matsumoto', coords: [-27.473858, -55.1022736] },
+    { name: 'Electricidad Botz Blitz', coords: [-26.8226938, -55.0230434] },
+    { name: 'El Nahuel', coords: [-40.1572103, -71.3524436] },
+    { name: 'Dangui', coords: [-40.7656399, -71.6584814] },
+    { name: 'Gabriel Salamida', coords: [-41.1294893, -71.2860941] },
+    { name: 'Casa Hartel y Barhen', coords: [-38.9945636, -64.095561] },
+    { name: 'N.A.C Servicio', coords: [-25.503997, -64.9657375] },
+    { name: 'Rp Service', coords: [-24.8078952, -65.408222] },
+    { name: 'Repuestera Guzman', coords: [-24.7942971, -65.4190035] },
+    { name: 'Apunto servicios', coords: [-22.5136918, -63.7982986] },
+    { name: 'Lubel', coords: [-33.6694816, -65.4492454] },
+    { name: 'Corralon Dalmasso SRL', coords: [-33.6610938, -65.4523253] },
+    { name: 'Santa Cruz Bobinados', coords: [-46.4532576, -67.5237707] },
+    { name: 'All Motors', coords: [-51.6196179, -69.2956557] },
+    { name: 'Tecno Maquinarias', coords: [-32.8175123, -61.3970886] },
+    { name: 'ELECTROMAK', coords: [-32.9311829, -60.6777954] },
+    { name: 'Sumimaq Express SRL', coords: [-32.9338708, -60.6668413] },
+    { name: 'Endata SRL', coords: [-32.9404408, -60.6521692] },
+    { name: 'Strong', coords: [-31.5508291, -61.0741476] },
+    { name: 'MCF Hidraulica', coords: [-31.5749307, -60.7282976] },
+    { name: 'Andrés de Dios Motoimplementos', coords: [-31.6144418, -60.6935761] },
+    { name: 'Construmec', coords: [-31.686763, -60.7627988] },
+    { name: 'Dobled33', coords: [-33.7201582, -61.9896463] },
+    { name: 'Ing. Raul Barchini', coords: [-27.7858965, -64.2680295] },
+    { name: 'Tecnihogar', coords: [-54.8094522, -68.338856] },
+    { name: 'Mundo Electronico', coords: [-26.8148736, -65.2212615] },
+    { name: 'Comercial Colon', coords: [-26.826558, -65.2328828] },
+    { name: 'MOTEC', coords: [-38.7367482, -62.2534197] },
+    { name: 'Dario Ruffini', coords: [-31.1534602, -63.3994554] },
+    { name: 'R.R Rodriguez', coords: [-31.504553, -68.5968973] },
+    { name: 'ToolService', coords: [-37.1225828, -56.8937842] },
+    { name: 'MC Servicio Técnico', coords: [-27.5700867, -60.7130483] },
+    { name: 'Zeta Servicio', coords: [-27.4150658, -59.0342265] },
+    { name: 'Max Service', coords: [-30.7673143, -57.9959348] },
+    { name: 'Mugas Daniel', coords: [-31.3994292, -64.1696341] },
+    { name: 'BACOR', coords: [-31.4240675, -62.0903298] },
+    { name: 'Obras y Servicios Tucumán', coords: [-26.84162, -65.1552729] },
+    { name: 'JMA - Servicio Técnico', coords: [-31.4060684, -64.1546398] },
+    { name: 'Ezelectromecanica', coords: [-35.6593239, -63.7577887] },
+    { name: 'MKFET', coords: [-27.4568545, -58.9850294] },
+    { name: 'Distriber', coords: [-34.9204948, -57.9535657] },
+    { name: 'Giuliano Hidraulicos', coords: [-31.3577031, -64.1979095] },
+    { name: 'El Obrador Alquiler y Reparacion de Herramientas', coords: [-34.9572629, -57.9569236] },
+    { name: 'Compresores Marcato', coords: [-32.4166761, -63.2294486] },
+    { name: 'Servicio Agustin', coords: [-27.4512789, -59.0064799] },
+    { name: 'Bobinados J.A.', coords: [-31.4314537, -62.0833585] },
+    { name: 'Traful', coords: [-37.3227006, -59.1429068] },
+    { name: 'Prediger Jardin Y Agro', coords: [-37.4674283, -61.9329663] },
+    { name: 'Ferretear Service', coords: [-32.40786, -63.2430682] },
+    { name: 'Bobinados Calvi', coords: [-37.3093273, -59.1788317] },
+    { name: 'Soluciones Eléctricas', coords: [-33.2070395, -62.600829] },
+    { name: 'GRC Eléctromecánica', coords: [-31.4211715, -62.1092204] },
+    { name: 'M&Q Service', coords: [-31.4227266, -64.1889318] },
+    { name: 'LS Service de Maquinarias', coords: [-34.6254658, -68.3359463] },
+    { name: 'LKR Servicio Tecnico', coords: [-34.7620238, -58.3785561] },
+    { name: 'Bobinados Lerda', coords: [-32.9363007, -63.2457758] },
+    { name: 'Servimaq San Pedro', coords: [-33.6924859, -59.672285] },
+    { name: 'FGC Service y Rental SH', coords: [-34.5145282, -58.7433285] },
+    { name: 'Yard Tech', coords: [-34.6356354, -58.8493096] },
+    { name: 'NDS Electromecánica', coords: [-34.6017262, -58.4706548] },
+    { name: 'Tools service', coords: [-33.9046615, -60.5778364] },
+    { name: 'Electromecánica Ferreira', coords: [-34.7846214, -58.2599133] },
+    { name: 'Lc Electromecánica', coords: [-34.7609665, -58.6207232] },
+    { name: 'ENCOAR Reparaciones', coords: [-34.7691538, -58.1930085] },
+    { name: 'Servimaq Neuquén', coords: [-38.9597731, -68.0679071] },
+    { name: 'Quick Service Cordoba', coords: [-31.4093065, -64.1772083] },
+    { name: 'Ferretaria Industrial Norte', coords: [-22.516955, -63.8017774] },
+    { name: 'Electromecánica RT', coords: [-34.6202672, -58.5500746] },
+    { name: 'Machine Service', coords: [-32.2213553, -58.1457293] },
+    { name: 'Ferretería Junin', coords: [-34.6075009, -58.3963614] },
+    { name: 'CKL ARGENTINA', coords: [-34.599871, -58.405204] },
+    { name: 'SERVIMAK', coords: [-33.2887536, -66.3294961] },
+    { name: 'ELECTROPCMANIA Bandfield', coords: [-34.7613766, -58.4029459] },
+    { name: 'ELECTROPCMANIA Lomas de Zamora', coords: [-34.7526399, -58.3866781] },
+    { name: 'MSI', coords: [-32.9142634, -62.4545284] },
+    { name: 'TV Ragal', coords: [-31.6115182, -60.7045288] },
+    { name: 'Marchal Service', coords: [-38.5529738, -58.7352535] },
+    { name: 'Oscar Service', coords: [-38.0308445, -57.5869779] },
+    { name: 'Servimaq Argentina', coords: [-39.0392924, -67.5783219] },
+    { name: 'Orosco Servicio Técnico', coords: [-33.0408598, -68.8803975] },
+    { name: 'ADM Servicio Técnico de Herramientas', coords: [-32.9626591, -68.7855433] },
+    { name: 'SERVICE OFICIAL Guaymallen', coords: [-32.9287788, -68.7368214] },
+    { name: 'SERVICE OFICIAL Godoy Cruz', coords: [-32.9278994, -68.8200972] },
+    { name: 'Servicios ADAM', coords: [-34.9007183, -58.5641533] },
+    { name: 'Electromecanica Martínez', coords: [-34.5818877, -58.7522977] },
+    { name: 'Dina-Mac', coords: [-41.0748219, -71.165787] },
+    { name: 'Electromecánica Verón', coords: [-34.5932829, -58.4419149] },
+    { name: 'Bombas Longchamps', coords: [-34.8580008, -58.3748116] },
+    { name: 'Reparaciones PM', coords: [-34.6655313, -58.7255154] },
+    { name: 'REPARAMAQ', coords: [-32.9676874, -60.6486581] },
+    { name: 'ELECTROTECNICA KEHLER', coords: [-33.2879666, -66.3340542] },
+    { name: 'PROMIND Temperley', coords: [-34.755642, -58.349294] },
+    { name: 'PROMIND Almirante Brown', coords: [-34.7665612, -58.3583001] },
+    { name: 'PROMIND San Vicente', coords: [-35.0357948, -58.413427] },
+    { name: 'Bocha Electronica', coords: [-34.6217647, -68.349414] },
+    { name: 'Electro-Service Chascomus', coords: [-35.5657597, -58.0272257] },
+    { name: 'NDF SERVICE CÓRDOBA', coords: [-31.4468168, -64.1205331] },
+    { name: 'Centro de Servicios Técnicos Tucumán', coords: [-26.839055, -65.2282911] },
+    { name: 'InfoSOL', coords: [-34.6035852, -58.4185188] },
+    { name: 'PICHINCHA Servicios', coords: [-32.9370166, -60.6574291] },
+    { name: 'SENILUC SERVICIOS', coords: [-26.7324791, -65.2670288] },
+    { name: 'Puglioli Enzo Servicio Técnico', coords: [-32.920971, -68.8784255] },
+    { name: 'STA Asistencia Técnica', coords: [-39.0170664, -67.6088836] },
+    { name: 'EGA SERVICIOS', coords: [-29.4231089, -66.8348143] },
+    { name: 'SERVITEC Maciel', coords: [-32.4490189, -60.8909378] },
+    { name: 'Servicios Tecnicos de Sergio Molinatti', coords: [-34.4410266, -59.4477026] },
+    { name: 'GP ELECTRÓNICA Y ELECTRICIDAD', coords: [-34.5195144, -61.3913566] },
+    { name: 'Lazer Electrónica', coords: [-26.8374959, -65.2410568] },
+    { name: 'TUCUMAN SERVICE', coords: [-26.8337702, -65.232345] },
+    { name: 'HIDRO-COMP', coords: [-26.8155915, -65.2176494] },
+    { name: 'Hijos De Osvaldo Monti (HOM) Arroyito', coords: [-31.4238762, -63.0518859] },
+    { name: 'Electrónica y Servicio', coords: [-27.3933937, -55.9085172] },
+    { name: 'ELECTRO SERVICE SA', coords: [-34.5981218, -58.3785239] },
+    { name: 'TOTAL SERVICE', coords: [-33.1032575, -64.3279934] },
+    { name: 'Licom Servicios', coords: [-24.1852941, -65.3064017] },
+    { name: 'El Galpon', coords: [-35.8164407, -61.8919855] },
+    { name: 'JMJ Service Integral Mantenimiento', coords: [-40.8124275, -63.0045285] },
+    { name: 'TeVeSur', coords: [-38.9591112, -68.0750745] },
+    { name: 'TECNOSERVICE', coords: [-34.5176171, -58.5360889] },
+    { name: 'Maquinas para soldaduras', coords: [-38.0228836, -57.5745727] },
+    { name: 'Todo Jardin', coords: [-33.1198059, -64.3642449] },
+    { name: 'Serpress', coords: [-34.9204948, -57.9535657] },
+    { name: 'Ele-mec', coords: [-31.4306657, -64.1563096] },
+    { name: 'Magriña Hnos.', coords: [-34.4765468, -58.770123] },
+    { name: 'Tmc Servicios', coords: [-35.6220072, -61.3619237] },
+    { name: 'Grupo-GR', coords: [-34.5917727, -58.4944518] },
+    { name: 'Powergen', coords: [-34.5414278, -58.5054228] },
+    { name: 'Delta Motosierras', coords: [-34.4352327, -58.5610335] },
+    { name: 'DISMAT', coords: [-42.7762578, -65.0378495] },
+    { name: 'CGM Reparaciones y Ventas', coords: [-38.7356204, -62.2828052] },
+    { name: 'Servilux', coords: [-34.598067, -58.4826633] },
+    { name: 'Reparaciones Don Antonio', coords: [-27.4769266, -58.9925827] },
+    { name: 'BP Reparaciones', coords: [-29.4577992, -60.2211486] },
+    { name: 'Eduardo Albrecht', coords: [-31.3472971, -64.2721001] },
+    { name: 'Servicios Neumáticos', coords: [-33.0067484, -60.648467] },
+    { name: 'Servicios Integrales Chaco', coords: [-27.4822998, -58.9334106] },
+    { name: 'CENTRO BULONERO', coords: [-35.6593239, -63.7577887] },
+    { name: 'SERVITEC 2.0', coords: [-33.0728252, -60.5786768] }
+  ];
+
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [-58.38, -34.6],
+    zoom: 12
+  });
+
+  const geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    placeholder: 'Ingresá tu dirección...',
+    marker: false
+  });
+
+  map.addControl(geocoder);
+
+  geocoder.on('result', function(e) {
+    const clientLocation = e.result.center;
+
+    new mapboxgl.Marker({ color: 'blue' })
+      .setLngLat(clientLocation)
+      .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
+      .addTo(map);
+
+    servicePoints.forEach(p => {
+      const distance = turf.distance(turf.point(clientLocation), turf.point(p.coords), { units: 'kilometers' }).toFixed(2);
+      new mapboxgl.Marker()
+        .setLngLat(p.coords)
+        .setPopup(new mapboxgl.Popup().setText(`${p.name} - ${distance} km`))
+        .addTo(map);
+    });
+  });
+</script>
+</body>
+</html>
