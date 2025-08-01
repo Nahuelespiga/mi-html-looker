@@ -46,6 +46,19 @@
   z-index: 10;
   width: 400px;
 }
+.btn-ubicacion {
+      position: absolute;
+      top: 10px;
+      left: 250px;
+      z-index: 2;
+      padding: 8px 12px;
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
 
 </style>
 
@@ -63,6 +76,7 @@
     </select>
   </div>
   <div id="geocoder" class="geocoder"></div>
+  <button id="usarUbicacion" class="btn-ubicacion">Usar mi ubicación</button>
   <div id="map"></div>
 
   <script>
@@ -286,87 +300,78 @@ provincias.forEach(prov => {
 
 // Al cambiar provincia, recargar ciudades
 provinciaFilter.addEventListener('change', () => {
-  ciudadFilter.innerHTML = '<option value="">Todas las ciudades</option>';
-  const ciudades = [...new Set(servicePoints
-    .filter(s => provinciaFilter.value === '' || s.provincia === provinciaFilter.value)
-    .map(s => s.ciudad))];
-  ciudades.forEach(ci => {
-    const opt = document.createElement('option');
-    opt.value = ci;
-    opt.textContent = ci;
-    ciudadFilter.appendChild(opt);
-  });
-  renderMarkers(ultimaUbicacion);
-});
-
-ciudadFilter.addEventListener('change', () => renderMarkers(ultimaUbicacion));
-
-// Función para mostrar marcadores
-function renderMarkers(clientLocation = null) {
-  document.querySelectorAll('.mapboxgl-marker').forEach(m => m.remove());
-  servicePoints
-    .filter(s => (provinciaFilter.value === '' || s.provincia === provinciaFilter.value) &&
-                 (ciudadFilter.value === '' || s.ciudad === ciudadFilter.value))
-    .forEach(p => {
-      const coordsInvertidos = [p.coords[1], p.coords[0]];
-      const distance = clientLocation
-        ? turf.distance(turf.point(clientLocation), turf.point(coordsInvertidos), { units: 'kilometers' }).toFixed(2)
-        : null;
-      new mapboxgl.Marker()
-        .setLngLat(coordsInvertidos)
-        .setPopup(new mapboxgl.Popup().setText(distance ? `${p.name} - ${distance} km` : p.name))
-        .addTo(map);
+      ciudadFilter.innerHTML = '<option value="">Todas las ciudades</option>';
+      const ciudades = [...new Set(servicePoints.filter(s => provinciaFilter.value === '' || s.provincia === provinciaFilter.value).map(s => s.ciudad))];
+      ciudades.forEach(ci => {
+        const opt = document.createElement('option');
+        opt.value = ci;
+        opt.textContent = ci;
+        ciudadFilter.appendChild(opt);
+      });
+      renderMarkers();
     });
-}
 
-// Inicial
-let ultimaUbicacion = null;
-renderMarkers();
+    ciudadFilter.addEventListener('change', () => renderMarkers());
 
-// Geocoder para ingresar dirección
-const geocoder = new MapboxGeocoder({
-  accessToken: mapboxgl.accessToken,
-  mapboxgl: mapboxgl,
-  placeholder: 'Ingresá tu dirección...',
-  marker: false
-});
-geocoder.addTo('#geocoder');
-
-geocoder.on('result', function(e) {
-  ultimaUbicacion = e.result.center;
-  new mapboxgl.Marker({ color: 'blue' })
-    .setLngLat(ultimaUbicacion)
-    .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
-    .addTo(map);
-  renderMarkers(ultimaUbicacion);
-});
-
-// Geolocalización automática del navegador
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    position => {
-      const ultimaUbicacion = [position.coords.longitude, position.coords.latitude];
-      map.flyTo({ center: ultimaUbicacion, zoom: 10 });
-
-      new mapboxgl.Marker({ color: 'blue' })
-        .setLngLat(ultimaUbicacion)
-        .setPopup(new mapboxgl.Popup().setText('Tu ubicación actual'))
-        .addTo(map);
-
-      renderMarkers(ultimaUbicacion);
-    },
-    error => {
-      console.warn('No se pudo obtener la ubicación:', error.message);
+    function renderMarkers(clientLocation = null) {
+      document.querySelectorAll('.mapboxgl-marker').forEach(m => m.remove());
+      servicePoints
+        .filter(s => (provinciaFilter.value === '' || s.provincia === provinciaFilter.value) && 
+                     (ciudadFilter.value === '' || s.ciudad === ciudadFilter.value))
+        .forEach(p => {
+          const coordsInvertidos = [p.coords[1], p.coords[0]];
+          const distance = clientLocation
+            ? turf.distance(turf.point(clientLocation), turf.point(coordsInvertidos), { units: 'kilometers' }).toFixed(2)
+            : null;
+          new mapboxgl.Marker()
+            .setLngLat(coordsInvertidos)
+            .setPopup(new mapboxgl.Popup().setText(distance ? `${p.name} - ${distance} km` : p.name))
+            .addTo(map);
+        });
     }
-  );
-} else {
-  console.warn('La geolocalización no está disponible en este navegador.');
-}
 
+    renderMarkers();
 
+    const geocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      mapboxgl: mapboxgl,
+      placeholder: 'Ingresá tu dirección...',
+      marker: false
+    });
 
+    document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
 
-  
+    geocoder.on('result', function (e) {
+      const clientLocation = e.result.center;
+      new mapboxgl.Marker({ color: 'blue' })
+        .setLngLat(clientLocation)
+        .setPopup(new mapboxgl.Popup().setText('Ubicación seleccionada'))
+        .addTo(map);
+      map.flyTo({ center: clientLocation, zoom: 10 });
+      renderMarkers(clientLocation);
+    });
+
+    document.getElementById('usarUbicacion').addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            const coords = [position.coords.longitude, position.coords.latitude];
+            new mapboxgl.Marker({ color: 'blue' })
+              .setLngLat(coords)
+              .setPopup(new mapboxgl.Popup().setText('Tu ubicación actual'))
+              .addTo(map);
+            map.flyTo({ center: coords, zoom: 10 });
+            renderMarkers(coords);
+          },
+          error => {
+            alert('No se pudo obtener tu ubicación.');
+            console.error(error);
+          }
+        );
+      } else {
+        alert('Tu navegador no soporta geolocalización.');
+      }
+    });
   </script>
 </body>
 </html>
