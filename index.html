@@ -313,39 +313,19 @@ provinciaFilter.addEventListener('change', () => {
 
     ciudadFilter.addEventListener('change', () => renderMarkers());
 
-    function renderMarkers(clientLocation = null) {
-      document.querySelectorAll('.mapboxgl-marker').forEach(m => m.remove());
-      servicePoints
-        .filter(s => (provinciaFilter.value === '' || s.provincia === provinciaFilter.value) && 
-                     (ciudadFilter.value === '' || s.ciudad === ciudadFilter.value))
-        .forEach(p => {
-          const coordsInvertidos = [p.coords[1], p.coords[0]];
-          const distance = clientLocation
-            ? turf.distance(turf.point(clientLocation), turf.point(coordsInvertidos), { units: 'kilometers' }).toFixed(2)
-            : null;
-          new mapboxgl.Marker()
-            .setLngLat(coordsInvertidos)
-            .setPopup(new mapboxgl.Popup().setText(distance ? `${p.name} - ${distance} km` : p.name))
-            .addTo(map);
-        });
-    }
-
-    renderMarkers();
-
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl,
       placeholder: 'Ingresá tu dirección...',
       marker: false
     });
-
     document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
 
-    geocoder.on('result', function (e) {
+    geocoder.on('result', function(e) {
       const clientLocation = e.result.center;
       new mapboxgl.Marker({ color: 'blue' })
         .setLngLat(clientLocation)
-        .setPopup(new mapboxgl.Popup().setText('Ubicación seleccionada'))
+        .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
         .addTo(map);
       map.flyTo({ center: clientLocation, zoom: 10 });
       renderMarkers(clientLocation);
@@ -353,21 +333,15 @@ provinciaFilter.addEventListener('change', () => {
 
     document.getElementById('usarUbicacion').addEventListener('click', () => {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          position => {
-            const coords = [position.coords.longitude, position.coords.latitude];
-            new mapboxgl.Marker({ color: 'blue' })
-              .setLngLat(coords)
-              .setPopup(new mapboxgl.Popup().setText('Tu ubicación actual'))
-              .addTo(map);
-            map.flyTo({ center: coords, zoom: 10 });
-            renderMarkers(coords);
-          },
-          error => {
-            alert('No se pudo obtener tu ubicación.');
-            console.error(error);
-          }
-        );
+        navigator.geolocation.getCurrentPosition(position => {
+          const clientLocation = [position.coords.longitude, position.coords.latitude];
+          new mapboxgl.Marker({ color: 'blue' })
+            .setLngLat(clientLocation)
+            .setPopup(new mapboxgl.Popup().setText('Tu ubicación actual'))
+            .addTo(map);
+          map.flyTo({ center: clientLocation, zoom: 10 });
+          renderMarkers(clientLocation);
+        });
       } else {
         alert('Tu navegador no soporta geolocalización.');
       }
@@ -375,3 +349,4 @@ provinciaFilter.addEventListener('change', () => {
   </script>
 </body>
 </html>
+
