@@ -11,29 +11,43 @@
   <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.1/mapbox-gl-geocoder.css" />
   <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
   <style>
-    html, body { height: 100%; margin: 0; padding: 0; }
-    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-    .filtros {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background-color: white;
-      padding: 10px;
-      border-radius: 6px;
-      z-index: 1;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
-      font-family: sans-serif;
-      font-size: 14px;
-    }
-    .filtros label {
-      display: block;
-      margin-top: 5px;
-    }
-    .filtros select {
-      width: 200px;
-      padding: 4px;
-    }
-  </style>
+  html, body { height: 100%; margin: 0; padding: 0; }
+
+  #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+  .filtros {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: white;
+    padding: 10px;
+    border-radius: 6px;
+    z-index: 1;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    font-family: sans-serif;
+    font-size: 14px;
+  }
+
+  .filtros label {
+    display: block;
+    margin-top: 5px;
+  }
+
+  .filtros select {
+    width: 200px;
+    padding: 4px;
+  }
+
+  .geocoder {
+    position: absolute;
+    z-index: 2;
+    width: 50%;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 70px;
+  }
+</style>
+
 </head>
 <body>
   <div class="filtros">
@@ -47,6 +61,7 @@
       <option value="">Todas las ciudades</option>
     </select>
   </div>
+  <div id="geocoder" class="geocoder"></div>
   <div id="map"></div>
 
   <script>
