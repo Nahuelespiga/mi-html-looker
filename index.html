@@ -248,76 +248,99 @@
     { name: 'CENTRO BULONERO', provincia: 'La Pampa', ciudad: 'Santa Rosa', coords: [-35.6593239, -63.7577887] },
     { name: 'SERVITEC 2.0', provincia: 'Santa Fe', ciudad: 'Rosario', coords: [-33.0728252, -60.5786768] }
     ];
+let clientLocation = null; // coordenadas del usuario (detectadas o ingresadas)
 
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: [-58.38, -34.6],
-      zoom: 4
-    });
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/streets-v11',
+  center: [-58.38, -34.6],
+  zoom: 4
+});
 
-    const provinciaFilter = document.getElementById('provinciaFilter');
-    const ciudadFilter = document.getElementById('ciudadFilter');
+const provinciaFilter = document.getElementById('provinciaFilter');
+const ciudadFilter = document.getElementById('ciudadFilter');
 
-    const provincias = [...new Set(servicePoints.map(s => s.provincia))];
-    provincias.forEach(prov => {
-      const opt = document.createElement('option');
-      opt.value = prov;
-      opt.textContent = prov;
-      provinciaFilter.appendChild(opt);
-    });
+// Poblar opciones de provincia
+const provincias = [...new Set(servicePoints.map(s => s.provincia))];
+provincias.forEach(prov => {
+  const opt = document.createElement('option');
+  opt.value = prov;
+  opt.textContent = prov;
+  provinciaFilter.appendChild(opt);
+});
 
-    provinciaFilter.addEventListener('change', () => {
-      ciudadFilter.innerHTML = '<option value="">Todas las ciudades</option>';
-      const ciudades = [...new Set(servicePoints
-        .filter(s => provinciaFilter.value === '' || s.provincia === provinciaFilter.value)
-        .map(s => s.ciudad))];
-      ciudades.forEach(ci => {
-        const opt = document.createElement('option');
-        opt.value = ci;
-        opt.textContent = ci;
-        ciudadFilter.appendChild(opt);
-      });
-      renderMarkers();
-    });
+// Evento al cambiar provincia
+provinciaFilter.addEventListener('change', () => {
+  ciudadFilter.innerHTML = '<option value="">Todas las ciudades</option>';
+  const ciudades = [...new Set(servicePoints
+    .filter(s => provinciaFilter.value === '' || s.provincia === provinciaFilter.value)
+    .map(s => s.ciudad))];
+  ciudades.forEach(ci => {
+    const opt = document.createElement('option');
+    opt.value = ci;
+    opt.textContent = ci;
+    ciudadFilter.appendChild(opt);
+  });
+  renderMarkers(); // volver a mostrar los marcadores
+});
 
-    ciudadFilter.addEventListener('change', renderMarkers);
+ciudadFilter.addEventListener('change', renderMarkers);
 
-    function renderMarkers(clientLocation = null) {
-      document.querySelectorAll('.mapboxgl-marker').forEach(m => m.remove());
-      servicePoints
-        .filter(s => (provinciaFilter.value === '' || s.provincia === provinciaFilter.value) &&
-                     (ciudadFilter.value === '' || s.ciudad === ciudadFilter.value))
-        .forEach(p => {
-          const coordsInvertidos = [p.coords[1], p.coords[0]];
-          const distance = clientLocation
-            ? turf.distance(turf.point(clientLocation), turf.point(coordsInvertidos), { units: 'kilometers' }).toFixed(2)
-            : null;
-          new mapboxgl.Marker()
-            .setLngLat(coordsInvertidos)
-            .setPopup(new mapboxgl.Popup().setText(distance ? `${p.name} - ${distance} km` : p.name))
-            .addTo(map);
-        });
-    }
-
-    renderMarkers();
-
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl: mapboxgl,
-      placeholder: 'Ingresá tu dirección...',
-      marker: false
-    });
-    map.addControl(geocoder);
-
-    geocoder.on('result', function(e) {
-      const clientLocation = e.result.center;
-      new mapboxgl.Marker({ color: 'blue' })
-        .setLngLat(clientLocation)
-        .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
+// Mostrar los markers en el mapa con distancia si se conoce clientLocation
+function renderMarkers() {
+  document.querySelectorAll('.mapboxgl-marker').forEach(m => m.remove());
+  servicePoints
+    .filter(s => (provinciaFilter.value === '' || s.provincia === provinciaFilter.value) &&
+                 (ciudadFilter.value === '' || s.ciudad === ciudadFilter.value))
+    .forEach(p => {
+      const coordsInvertidos = [p.coords[1], p.coords[0]]; // importante
+      const distance = clientLocation
+        ? turf.distance(turf.point(clientLocation), turf.point(coordsInvertidos), { units: 'kilometers' }).toFixed(2)
+        : null;
+      new mapboxgl.Marker()
+        .setLngLat(coordsInvertidos)
+        .setPopup(new mapboxgl.Popup().setText(distance ? `${p.name} - ${distance} km` : p.name))
         .addTo(map);
-      renderMarkers(clientLocation);
     });
+}
+
+// Cargar markers al inicio
+renderMarkers();
+
+// Geocoder para ingresar ubicación manualmente
+const geocoder = new MapboxGeocoder({
+  accessToken: mapboxgl.accessToken,
+  mapboxgl: mapboxgl,
+  placeholder: 'Ingresá tu dirección...',
+  marker: false
+});
+map.addControl(geocoder);
+
+// Al seleccionar una ubicación manualmente
+geocoder.on('result', function(e) {
+  clientLocation = e.result.center;
+  new mapboxgl.Marker({ color: 'blue' })
+    .setLngLat(clientLocation)
+    .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
+    .addTo(map);
+  map.flyTo({ center: clientLocation, zoom: 9 });
+  renderMarkers();
+});
+
+// Detectar ubicación automática si el navegador lo permite
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    clientLocation = [pos.coords.longitude, pos.coords.latitude];
+    new mapboxgl.Marker({ color: 'blue' })
+      .setLngLat(clientLocation)
+      .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
+      .addTo(map);
+    map.flyTo({ center: clientLocation, zoom: 9 });
+    renderMarkers();
+  });
+}
+
+  
   </script>
 </body>
 </html>
