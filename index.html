@@ -330,7 +330,7 @@ const geocoder = new MapboxGeocoder({
   placeholder: 'Ingresá tu dirección...',
   marker: false
 });
-map.addControl(geocoder);
+geocoder.addTo('#geocoder');
 
 geocoder.on('result', function(e) {
   ultimaUbicacion = e.result.center;
@@ -343,16 +343,26 @@ geocoder.on('result', function(e) {
 
 // Geolocalización automática del navegador
 if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(position => {
-    ultimaUbicacion = [position.coords.longitude, position.coords.latitude];
-    map.flyTo({ center: ultimaUbicacion, zoom: 10 });
-    new mapboxgl.Marker({ color: 'blue' })
-      .setLngLat(ultimaUbicacion)
-      .setPopup(new mapboxgl.Popup().setText('Tu ubicación actual'))
-      .addTo(map);
-    renderMarkers(ultimaUbicacion);
-  });
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      const ultimaUbicacion = [position.coords.longitude, position.coords.latitude];
+      map.flyTo({ center: ultimaUbicacion, zoom: 10 });
+
+      new mapboxgl.Marker({ color: 'blue' })
+        .setLngLat(ultimaUbicacion)
+        .setPopup(new mapboxgl.Popup().setText('Tu ubicación actual'))
+        .addTo(map);
+
+      renderMarkers(ultimaUbicacion);
+    },
+    error => {
+      console.warn('No se pudo obtener la ubicación:', error.message);
+    }
+  );
+} else {
+  console.warn('La geolocalización no está disponible en este navegador.');
 }
+
 
 
 
