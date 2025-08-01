@@ -289,7 +289,7 @@
         .filter(s => (provinciaFilter.value === '' || s.provincia === provinciaFilter.value) &&
                      (ciudadFilter.value === '' || s.ciudad === ciudadFilter.value))
         .forEach(p => {
-          const coordsInvertidos = [p.coords[0], p.coords[1]];
+          const coordsInvertidos = [p.coords[1], p.coords[0]];
           const distance = clientLocation
             ? turf.distance(turf.point(clientLocation), turf.point(coordsInvertidos), { units: 'kilometers' }).toFixed(2)
             : null;
